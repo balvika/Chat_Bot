@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат-бот</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #262626;
+            padding: 0;
+        }
+        
+        .header {
+            background-color: #262626;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 30px;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            height: 100%;
+            background-color: rgb(34, 34, 34);
+            overflow: hidden;
+            border-left: 1px solid #ffffff;
+            border-right: 1px solid #ffffff;
+            position: relative;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-color: #262626;
+        }
+        
+        .messages-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 100%;
+        }
+        
+        .message-container {
+            display: flex;
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        
+        .user-message-container {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            margin: 0 10px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            overflow: hidden; 
+        }
+
+
+        /* .user-avatar {
+            background-color: #007aff;
+        }
+
+        .bot-avatar {
+            background-color: #34c759;
+        } */
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 30px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 15px;
+            max-width: 100%;
+        }
+        
+        .user-message {
+            background-color: #ffc75f;
+            color: rgb(0, 0, 0);
+        }
+        
+        .bot-message {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .input-container {
+            position: relative;
+            padding: 12px 16px;
+            background-color: #262626;
+        }
+        
+        .message-input {
+            width: 100%;
+            padding: 12px 50px 12px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 20px;
+            outline: none;
+            resize: none;
+            font-size: 15px;
+            background-color: #f8f9fa;
+            box-sizing: border-box;
+            min-height: 44px;
+            max-height: 150px;
+            overflow-y: hidden;
+            line-height: 1.4;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .send-button {
+            position: absolute;
+            right: 28px;
+            bottom: 16px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: none;
+            cursor: default;
+            outline: none;
+            top: 22px;
+        }
+         
+        .send-button.active {
+            cursor: pointer;
+        }
+        
+        .send-icon {
+            width: 24px;
+            height: 24px;
+            fill: #9e9e9e;
+        }
+      
+        .send-button.active .send-icon {
+            fill: #ffc75f;
+        }
+
+        .typing-indicator {
+            display: none;
+            margin-bottom: 15px;
+            align-self: flex-start;
+            width: 100%;
+        }
+        
+        .typing-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .typing-content {
+            display: flex;
+            background-color: #ffc75f;
+            color: #000000;
+            border-radius: 30px;
+            padding: 12px 16px;
+            font-size: 15px;
+            margin-left: 10px;
+            font-weight: bolder;
+        }
+        
+        .typing-indicator span {
+            animation: typing 1.5s infinite;
+            display: inline-block;
+        }
+        
+        @keyframes typing {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">Чат-бот</div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="messages-container" id="messages-container">
+
+                <div class="typing-indicator" id="typing-indicator">
+                    <div class="typing-container">
+                        <div class="avatar bot-avatar"></div>
+                        <div class="typing-content">
+                            <span>.</span><span>.</span><span>.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <textarea class="message-input" id="message-input" placeholder="Введите сообщение..." rows="1"></textarea>
+            <button class="send-button" id="send-button">
+                <svg class="send-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M476 3.2L12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 52.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messagesContainer = document.getElementById('messages-container');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const typingIndicator = document.getElementById('typing-indicator');
+            
+            let waitingForOperation = false;
+            let numbersToCalculate = [];
+            
+
+            function adjustTextareaHeight() {
+                messageInput.style.height = 'auto';
+                messageInput.style.height = messageInput.scrollHeight + 'px';
+
+                sendButton.classList.toggle('active', messageInput.value.trim().length > 0);
+            }
+            
+            messageInput.addEventListener('input', adjustTextareaHeight);
+
+            adjustTextareaHeight();
+            
+
+            function setupMessageSending() {
+                messageInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey && sendButton.classList.contains('active')) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+                
+                sendButton.addEventListener('click', function() {
+                    if (this.classList.contains('active')) {
+                        sendMessage();
+                    }
+                });
+            }
+            
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (!message) return;
+                
+                addMessage(message, 'user-message', true);
+                messageInput.value = '';
+                adjustTextareaHeight();
+                
+
+                typingIndicator.style.display = 'flex';
+                
+
+                const botAvatar = typingIndicator.querySelector('.avatar');
+                botAvatar.style.backgroundImage = "url('avatars/bot_avatar.png')";
+                botAvatar.textContent = '';
+                
+
+                scrollToBottom();
+                
+
+                setTimeout(() => {
+                    typingIndicator.style.display = 'none';
+                    const botMessage = processBotResponse(message);
+                    addMessage(botMessage, 'bot-message', false);
+                    scrollToBottom();
+                }, 1000 + Math.random() * 2000);
+            }
+            
+            function addMessage(text, className, isUser = false) {
+                const container = document.createElement('div');
+                container.className = `message-container ${isUser ? 'user-message-container' : ''}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = `avatar ${isUser ? 'user-avatar' : 'bot-avatar'}`;
+                
+
+                if (isUser) {
+                    avatar.style.backgroundImage = "url('avatars/user_avatar.png')";
+                } else {
+                    avatar.style.backgroundImage = "url('avatars/bot_avatar.png')";
+                }
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${className}`;
+                messageElement.textContent = text;
+                
+                container.append(avatar, messageElement);
+                
+
+                messagesContainer.insertBefore(container, typingIndicator);
+            }
+            
+            function scrollToBottom() {
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function processBotResponse(userMessage) {
+                if (waitingForOperation) {
+                    return processOperation(userMessage);
+                }
+                
+                if (userMessage.startsWith('/')) {
+                    return processCommand(userMessage);
+                } else {
+                    return "Я не понимаю, введите другую команду!";
+                }
+            }
+            
+            function processCommand(command) {
+                if (command === '/start') {
+                    return "Привет, меня зовут Чат-бот, а как зовут тебя?";
+                } 
+                else if (command.startsWith('/name:')) {
+                    const name = command.split(':')[1].trim();
+                    return `Привет ${name}, приятно познакомится. Я умею считать, введи числа которые надо посчитать`;
+                } 
+                else if (command.startsWith('/number:')) {
+                    const numbersStr = command.split(':')[1].trim();
+                    numbersToCalculate = numbersStr.split(',').map(num => parseFloat(num.trim()));
+                    
+                    if (numbersToCalculate.length === 2 && numbersToCalculate.every(n => !isNaN(n))) {
+                        waitingForOperation = true;
+                        return "Введите одно из действий: -, +, *, /";
+                    } else {
+                        return "Пожалуйста, введите два числа через запятую, например: /number: 5, 3";
+                    }
+                } 
+                else if (command === '/stop') {
+                    return "Всего доброго, если хочешь поговорить пиши /start";
+                } 
+                else {
+                    return "Я не понимаю, введите другую команду!";
+                }
+            }
+            
+            function processOperation(operation) {
+                if (!['+', '-', '*', '/'].includes(operation)) {
+                    return "Пожалуйста, введите одно из действий: -, +, *, /";
+                }
+                
+                const [a, b] = numbersToCalculate;
+                let result;
+                
+                switch (operation) {
+                    case '+': result = a + b; break;
+                    case '-': result = a - b; break;
+                    case '*': result = a * b; break;
+                    case '/': result = b !== 0 ? a / b : "Ошибка: деление на ноль"; break;
+                }
+                
+                waitingForOperation = false;
+                numbersToCalculate = [];
+                return `${a} ${operation} ${b} = ${result}`;
+            }
+            
+            setupMessageSending();
+        });
+    </script>
+</body>
+</html>
